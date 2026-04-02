@@ -9,6 +9,7 @@ Grafo le_grafo(std::istream& is = std::cin)
     std::string s;
     std::size_t n;
     is >> s >> n;
+    std::getline(is, s);
     
     // le vertices
     std::vector<std::pair<std::string, std::vector<double>>> 
@@ -17,8 +18,9 @@ Grafo le_grafo(std::istream& is = std::cin)
     {
         std::size_t pos;
         std::string rotulo;
-        is >> pos >> rotulo;
-        ma[pos - 1].first = rotulo;
+        is >> pos;
+        std::getline(is, rotulo);
+        ma[i].first = rotulo.substr(1);  // retira espaco em branco
     }
     
     // le arestas
@@ -62,7 +64,7 @@ std::size_t Grafo::grau(const Posicao pos) const
 std::vector<Grafo::Posicao> Grafo::vizinhos(const Posicao pos) const
 {
     std::vector<Posicao> vizinhos;
-    for (std::size_t i = 0; i < qtd_arestas(); ++i)
+    for (std::size_t i = 0; i < qtd_vertices(); ++i)
     {
         if (matriz_adjacencia[pos - 1].second[i] != std::numeric_limits<double>::infinity())
             vizinhos.push_back(i + 1);

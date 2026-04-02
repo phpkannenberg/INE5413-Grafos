@@ -12,8 +12,11 @@ public:
     typedef std::size_t Posicao;
     typedef std::vector<std::pair<std::string, std::vector<double>>> MatrizAdjacencia;
     
-    Grafo(): matriz_adjacencia() { }
+    Grafo(): matriz_adjacencia() { }  // default constructor
+    Grafo(const Grafo& g) = default;  // copy constructor
     Grafo(const MatrizAdjacencia& ma): matriz_adjacencia(ma) { }
+    ~Grafo() = default;  // destructor
+    
     std::size_t qtd_vertices() const 
         { return matriz_adjacencia.size(); }
     std::size_t qtd_arestas() const;
