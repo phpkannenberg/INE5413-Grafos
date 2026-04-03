@@ -5,6 +5,7 @@
 #include <string>
 #include <istream>
 #include <limits>
+#include <map>
 
 class Grafo
 {
@@ -28,6 +29,9 @@ public:
         { return matriz_adjacencia[posa - 1].second[posb - 1] != std::numeric_limits<double>::infinity(); }
     double peso(const Posicao posa, const Posicao posb) const
         { return matriz_adjacencia[posa - 1].second[posb - 1]; }
+    
+    // retorna um multimap com pairs representando vertice e nivel da busca
+    std::map<Posicao, std::size_t> arvore_busca_largura(const Posicao origem) const;
 private:
     // cada elemento representa um vertice
     // pair.first retorna o rotulo
@@ -35,6 +39,7 @@ private:
     const MatrizAdjacencia matriz_adjacencia;
 };
 
-Grafo le_grafo(std::istream& is);  
+Grafo le_grafo(std::istream& is);
+void print_arvore_busca_largura(const std::map<Grafo::Posicao, std::size_t>& arvore);
 
 #endif
