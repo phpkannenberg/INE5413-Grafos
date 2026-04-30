@@ -10,7 +10,9 @@
 class Grafo
 {
 public:
-    typedef std::size_t Posicao;
+    
+    // EXERCICIO 1
+    typedef std::size_t Vertice;
     typedef std::vector<std::pair<std::string, std::vector<double>>> MatrizAdjacencia;
     
     Grafo(): matriz_adjacencia() { }  // default constructor
@@ -21,17 +23,30 @@ public:
     std::size_t qtd_vertices() const 
         { return matriz_adjacencia.size(); }
     std::size_t qtd_arestas() const;
-    std::size_t grau(const Posicao pos) const;
-    const std::string& rotulo(const Posicao pos) const 
-        { return matriz_adjacencia[pos - 1].first; }
-    std::vector<Posicao> vizinhos(const Posicao pos) const;
-    bool ha_aresta(const Posicao posa, const Posicao posb) const
-        { return matriz_adjacencia[posa - 1].second[posb - 1] != std::numeric_limits<double>::infinity(); }
-    double peso(const Posicao posa, const Posicao posb) const
-        { return matriz_adjacencia[posa - 1].second[posb - 1]; }
+    std::size_t grau(const Vertice v) const;
+    const std::string& rotulo(const Vertice v) const 
+        { return matriz_adjacencia[v - 1].first; }
+    std::vector<Vertice> vizinhos(const Vertice v) const;
+    bool ha_aresta(const Vertice va, const Vertice vb) const
+        { return matriz_adjacencia[va - 1].second[vb - 1] != std::numeric_limits<double>::infinity(); }
+    double peso(const Vertice va, const Vertice vb) const
+        { return matriz_adjacencia[va - 1].second[vb - 1]; }
     
-    // retorna um multimap com pairs representando vertice e nivel da busca
-    std::map<Posicao, std::size_t> arvore_busca_largura(const Posicao origem) const;
+    // EXERCICIO 2
+    // retorna um map representando arvore de busca 
+    // pairs do map representam vertice e nivel da busca em que vertice foi visitado
+    std::map<Vertice, std::size_t> arvore_busca_largura(const Vertice origem) const;
+    void print_arvore_busca_largura(const std::map<Grafo::Vertice, std::size_t>& arvore) const;
+    
+    // EXERCICIO 3
+    struct RetornoHierholzer
+    {
+        bool ha_ciclo_euleriano;
+        std::vector<Vertice> ciclo_euleriano;
+    };
+    RetornoHierholzer algoritmo_hierholzer() const;
+    RetornoHierholzer buscar_subciclo(Vertice v, std::vector<std::vector<std::size_t>>& C) const;
+    
 private:
     // cada elemento representa um vertice
     // pair.first retorna o rotulo
@@ -40,6 +55,5 @@ private:
 };
 
 Grafo le_grafo(std::istream& is);
-void print_arvore_busca_largura(const std::map<Grafo::Posicao, std::size_t>& arvore);
 
 #endif

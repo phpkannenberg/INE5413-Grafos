@@ -35,13 +35,24 @@ void teste_ex1(const Grafo& g)
 
 void teste_ex2(const Grafo& g)
 {
+    std::cout << "TESTE EXERCICIO 2:\n\n";
     for (auto i = 0; i < g.qtd_vertices(); ++i)
     {
         std::cout << "BL com origem no Vertice " << i + 1 << '\n';
         auto arvore_bl = g.arvore_busca_largura(i + 1);
-        print_arvore_busca_largura(arvore_bl);
+        g.print_arvore_busca_largura(arvore_bl);
         std::cout << '\n';
     }
+}
+
+void teste_ex3(const Grafo& g)
+{
+    std::cout << "TESTE EXERCICIO 3:\n\n";
+    auto ciclo = g.algoritmo_hierholzer();
+    std::cout << (ciclo.ha_ciclo_euleriano ? 1 : 0) << "\n";
+    for (const auto v : ciclo.ciclo_euleriano)
+        std::cout << v << " ";
+    std::cout << '\n';
 }
 
 int main()
@@ -56,6 +67,7 @@ int main()
     Grafo g = le_grafo(in);
     teste_ex1(g);
     teste_ex2(g);
+    teste_ex3(g);
     
     return 0;
 }

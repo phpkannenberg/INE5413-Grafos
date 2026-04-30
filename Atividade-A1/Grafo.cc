@@ -21,21 +21,21 @@ Grafo le_grafo(std::istream& is = std::cin)
         ma(n, std::make_pair("", std::vector<double>(n, std::numeric_limits<double>::infinity())));  // matriz de adjacencia
     for (std::size_t i = 0; i < n; ++i)
     {
-        std::size_t pos;
+        std::size_t v;
         std::string rotulo;
-        is >> pos;
+        is >> v;
         std::getline(is, rotulo);
         ma[i].first = rotulo.substr(1);  // retira espaco em branco
     }
     
     // le arestas
     is >> s;
-    std::size_t posa, posb;
+    std::size_t va, vb;
     double peso;
-    while (is >> posa >> posb >> peso)
+    while (is >> va >> vb >> peso)
     {
-        ma[posa - 1].second[posb - 1] = peso;
-        ma[posb - 1].second[posa - 1] = peso;
+        ma[va - 1].second[vb - 1] = peso;
+        ma[vb - 1].second[va - 1] = peso;
     }
     
     return Grafo(ma);
@@ -55,10 +55,10 @@ std::size_t Grafo::qtd_arestas() const
     return n / 2;  // matriz simetrica (sem self loops)
 }
 
-std::size_t Grafo::grau(const Posicao pos) const
+std::size_t Grafo::grau(const Vertice v) const
 {
     std::size_t grau{0};
-    for (auto a : matriz_adjacencia[pos - 1].second)
+    for (auto a : matriz_adjacencia[v - 1].second)
     {
         if (a != std::numeric_limits<double>::infinity())
             ++grau;
@@ -66,30 +66,30 @@ std::size_t Grafo::grau(const Posicao pos) const
     return grau;
 }
 
-std::vector<Grafo::Posicao> Grafo::vizinhos(const Posicao pos) const
+std::vector<Grafo::Vertice> Grafo::vizinhos(const Vertice v) const
 {
-    std::vector<Posicao> vizinhos;
+    std::vector<Vertice> vizinhos;
     for (std::size_t i = 0; i < qtd_vertices(); ++i)
     {
-        if (matriz_adjacencia[pos - 1].second[i] != std::numeric_limits<double>::infinity())
+        if (matriz_adjacencia[v - 1].second[i] != std::numeric_limits<double>::infinity())
             vizinhos.push_back(i + 1);
     }
     return vizinhos;
 }
 
-std::map<Grafo::Posicao, std::size_t> Grafo::arvore_busca_largura(const Posicao origem) const
+std::map<Grafo::Vertice, std::size_t> Grafo::arvore_busca_largura(const Vertice origem) const
 {
-    // local struct para representar um vertice
-    struct Vertice
+    // local struct para representar um nodo (vertice)
+    struct Nodo
     {
         std::size_t nivel{std::numeric_limits<std::size_t>::max()};
-        Posicao ancestral{std::numeric_limits<std::size_t>::max()};
+        Vertice ancestral{std::numeric_limits<std::size_t>::max()};
         bool visitado{false};
     };
     
     // cada elemento de vertices representa um vertice (em ordem)
-    std::vector<Vertice> vertices(qtd_vertices());
-    std::queue<Posicao> q;
+    std::vector<Nodo> vertices(qtd_vertices());
+    std::queue<Vertice> q;
     
     // configurando vertice de origem
     vertices[origem - 1].nivel = 0;
@@ -100,7 +100,7 @@ std::map<Grafo::Posicao, std::size_t> Grafo::arvore_busca_largura(const Posicao 
     while (!q.empty())
     {
         // visitando vertice enfileirado
-        Posicao atual = q.front();
+        Vertice atual = q.front();
         q.pop();
         for (auto vizinho : vizinhos(atual))
         {
@@ -116,7 +116,7 @@ std::map<Grafo::Posicao, std::size_t> Grafo::arvore_busca_largura(const Posicao 
     }
     
     // gera map
-    std::map<Posicao, std::size_t> arvore;
+    std::map<Vertice, std::size_t> arvore;
     for (std::size_t i = 0; i < vertices.size(); ++i)
     {
         arvore[i + 1] = vertices[i].nivel;
@@ -125,14 +125,14 @@ std::map<Grafo::Posicao, std::size_t> Grafo::arvore_busca_largura(const Posicao 
     return arvore;
 }
 
-void print_arvore_busca_largura(const std::map<Grafo::Posicao, std::size_t>& arvore)
+void Grafo::print_arvore_busca_largura(const std::map<Vertice, std::size_t>& arvore) const
 {
     auto n = arvore.size();
     std::size_t nivel{0};
     
     while (n > 0)
     {
-        std::vector<Grafo::Posicao> vertices_no_nivel;
+        std::vector<Vertice> vertices_no_nivel;
         for (auto v : arvore)
         {
             if (v.second == nivel) 
@@ -149,6 +149,109 @@ void print_arvore_busca_largura(const std::map<Grafo::Posicao, std::size_t>& arv
             std::cout << vertices_no_nivel[i] << (i != vertices_no_nivel.size() - 1 ? "," : "");
         }
         std::cout << '\n';
+        
         ++nivel;
     }
+}
+
+Grafo::RetornoHierholzer Grafo::algoritmo_hierholzer() const
+{
+    // sem arestas: ciclo euleriano vazio
+    if (qtd_arestas() == 0)
+    {
+        return {true, {}};
+    }
+    
+    // com arestas: buscar ciclo
+    std::vector<std::vector<std::size_t>> C(qtd_vertices(), 
+                                            std::vector<std::size_t>(qtd_vertices(), 0));
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        for (auto j = 0; j < qtd_vertices(); ++j)
+        {
+            if (matriz_adjacencia[i].second[j] != std::numeric_limits<double>::infinity())
+            {
+                ++C[i][j];
+            }
+        }
+    }
+    
+    Vertice v(0);
+    for (auto i = 1; i <= qtd_vertices(); ++i)
+    {
+        if (grau(i) > 0)
+        {
+            v = i;
+            break;
+        }
+    }
+    
+    RetornoHierholzer ciclo = buscar_subciclo(v, C);
+    
+    if (!ciclo.ha_ciclo_euleriano)
+    {
+        return {false, {}};
+    }
+    
+    for (const auto& linha : C)
+    {
+        for (const auto& aresta : linha)
+        {
+            if (aresta != 0)
+            {
+                return {false, {}};
+            }
+        }
+    }
+    
+    return ciclo;
+}
+
+Grafo::RetornoHierholzer Grafo::buscar_subciclo(Vertice v, std::vector<std::vector<std::size_t>>& C) const
+{
+    std::vector<Vertice> ciclo{v};
+    
+    Vertice t(v);
+    do
+    {
+        Vertice u(0);
+        for (auto j = 0; j < qtd_vertices(); ++j)
+        {
+            if (C[v - 1][j] > 0)  // equivalente ao else da linha 6 do algoritmo nas anotacoes
+            {
+                u = j + 1;
+                break;
+            }
+        }
+        
+        if (u == 0)  // se u == 0, nenhuma aresta foi encontrada no for-loop acima
+        {
+            return {false, {}};
+        }
+        
+        --C[v - 1][u - 1];
+        --C[u - 1][v - 1];
+        v = u;
+        ciclo.push_back(v);
+    } while (v != t);
+    
+    for (auto it = ciclo.begin(); it != ciclo.end(); ++it)
+    {
+        Vertice x = *it;
+        for (auto j = 0; j < qtd_vertices(); ++j)
+        {
+            if (C[x - 1][j] > 0)
+            {
+                auto subciclo = buscar_subciclo(x, C);
+                if (!subciclo.ha_ciclo_euleriano)
+                {
+                    return {false, {}};
+                }
+                ciclo.insert(it, subciclo.ciclo_euleriano.begin(), subciclo.ciclo_euleriano.end() - 1);
+                break;
+            }
+        }
+    }
+    
+    return {true, ciclo};
 }
