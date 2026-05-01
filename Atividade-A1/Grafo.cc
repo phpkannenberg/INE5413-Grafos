@@ -255,3 +255,45 @@ Grafo::RetornoHierholzer Grafo::buscar_subciclo(Vertice v, std::vector<std::vect
     
     return {true, ciclo};
 }
+
+Grafo::RetornoFloydWarshall Grafo::algoritmo_floyd_warshall() const
+{
+    // matriz de custos
+    std::vector<std::vector<double>> 
+        matriz_custos(qtd_vertices(), std::vector<double>(qtd_vertices()));
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        for (auto j = 0; j < qtd_vertices(); ++j)
+        {
+            matriz_custos[i][j] = (i == j) ? 0 : matriz_adjacencia[i].second[j];
+        }
+    }
+    
+    // matriz de predecessores (zero representa ausencia de predecessor (nao ha vertice 0))
+    std::vector<std::vector<Vertice>> 
+        matriz_predecessores(qtd_vertices(), std::vector<Vertice>(qtd_vertices()));
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        for (auto j = 0; j < qtd_vertices(); ++j)
+        {
+            matriz_predecessores[i][j] = (matriz_adjacencia[i].second[j] == std::numeric_limits<double>::infinity()) ? 0 : i + 1;
+        }
+    }
+    
+    for (auto k = 0; k < qtd_vertices(); ++k)
+    {
+        for (auto i = 0; i < qtd_vertices(); ++i)
+        {
+            for (auto j = 0; j < qtd_vertices(); ++j)
+            {
+                if (matriz_custos[i][j] > matriz_custos[i][k] + matriz_custos[k][j])
+                {
+                    matriz_predecessores[i][j] = matriz_predecessores[k][j];
+                }
+                matriz_custos[i][j] = std::min(matriz_custos[i][j], matriz_custos[i][k] + matriz_custos[k][j]);
+            }
+        }
+    }
+    
+    return {matriz_custos, matriz_predecessores};
+}

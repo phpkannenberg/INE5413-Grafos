@@ -55,6 +55,21 @@ void teste_ex3(const Grafo& g)
     std::cout << '\n';
 }
 
+void teste_ex5(const Grafo& g)
+{
+    std::cout << "TESTE EXERCICIO 5:\n\n";
+    auto fw = g.algoritmo_floyd_warshall();
+    for (auto i = 0; i < g.qtd_vertices(); ++i)
+    {
+        std::cout << i + 1 << ":";
+        for (auto j = 0; j < g.qtd_vertices(); ++j)
+        {
+            std::cout << fw.matriz_pesos[i][j]
+                      << (j != g.qtd_vertices() - 1 ? "," : "\n"); 
+        }
+    }
+}
+
 int main()
 {
     std::ifstream in("teste.txt");
@@ -68,6 +83,7 @@ int main()
     teste_ex1(g);
     teste_ex2(g);
     teste_ex3(g);
+    teste_ex5(g);
     
     return 0;
 }

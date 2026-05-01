@@ -47,6 +47,14 @@ public:
     RetornoHierholzer algoritmo_hierholzer() const;
     RetornoHierholzer buscar_subciclo(Vertice v, std::vector<std::vector<std::size_t>>& C) const;
     
+    // EXERCICIO 5
+    struct RetornoFloydWarshall
+    {
+        std::vector<std::vector<double>> matriz_pesos;
+        std::vector<std::vector<Vertice>> matriz_predecessores;
+    };
+    RetornoFloydWarshall algoritmo_floyd_warshall() const;
+    
 private:
     // cada elemento representa um vertice
     // pair.first retorna o rotulo
