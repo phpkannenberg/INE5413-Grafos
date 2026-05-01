@@ -10,16 +10,13 @@
 class Grafo
 {
 public:
-    
-    // EXERCICIO 1
     typedef std::size_t Vertice;
     typedef std::vector<std::pair<std::string, std::vector<double>>> MatrizAdjacencia;
     
+    // EXERCICIO 1
+    // leitura do grafo a partir de arquivo eh feita por funcao le_grafo (declarada fora do escopo da classe)
     Grafo(): matriz_adjacencia() { }  // default constructor
-    Grafo(const Grafo& g) = default;  // copy constructor
     Grafo(const MatrizAdjacencia& ma): matriz_adjacencia(ma) { }
-    ~Grafo() = default;  // destructor
-    
     std::size_t qtd_vertices() const 
         { return matriz_adjacencia.size(); }
     std::size_t qtd_arestas() const;
@@ -36,18 +33,18 @@ public:
     // retorna um map representando arvore de busca 
     // pairs do map representam vertice e nivel da busca em que vertice foi visitado
     std::map<Vertice, std::size_t> arvore_busca_largura(const Vertice origem) const;
-    void print_arvore_busca_largura(const std::map<Grafo::Vertice, std::size_t>& arvore) const;
     
     // EXERCICIO 3
+    // struct para encapsular estruturas retornadas pelo algoritmo de Hierholzer
     struct RetornoHierholzer
     {
         bool ha_ciclo_euleriano;
         std::vector<Vertice> ciclo_euleriano;
     };
     RetornoHierholzer algoritmo_hierholzer() const;
-    RetornoHierholzer buscar_subciclo(Vertice v, std::vector<std::vector<std::size_t>>& C) const;
     
     // EXERCICIO 5
+    // struct para encapsular estruturas retornadas pelo algoritmo de Floyd-Warshall
     struct RetornoFloydWarshall
     {
         std::vector<std::vector<double>> matriz_pesos;
@@ -60,6 +57,9 @@ private:
     // pair.first retorna o rotulo
     // pair.second retorna vetor com peso da transicao para cada vertice
     const MatrizAdjacencia matriz_adjacencia;
+    
+    // funcao auxiliar chamada por Grafo::algoritmo_hierholzer
+    RetornoHierholzer buscar_subciclo(Vertice v, std::vector<std::vector<std::size_t>>& C) const;
 };
 
 Grafo le_grafo(std::istream& is);

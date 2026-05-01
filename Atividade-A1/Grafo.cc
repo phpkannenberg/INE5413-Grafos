@@ -82,13 +82,15 @@ std::map<Grafo::Vertice, std::size_t> Grafo::arvore_busca_largura(const Vertice 
     // local struct para representar um nodo (vertice)
     struct Nodo
     {
-        std::size_t nivel{std::numeric_limits<std::size_t>::max()};
-        Vertice ancestral{std::numeric_limits<std::size_t>::max()};
-        bool visitado{false};
+        std::size_t nivel;
+        Vertice ancestral;
+        bool visitado;
     };
     
     // cada elemento de vertices representa um vertice (em ordem)
-    std::vector<Nodo> vertices(qtd_vertices());
+    std::vector<Nodo> vertices(qtd_vertices(), {std::numeric_limits<std::size_t>::max(),
+                                                std::numeric_limits<std::size_t>::max(),
+                                                false});
     std::queue<Vertice> q;
     
     // configurando vertice de origem
@@ -104,7 +106,7 @@ std::map<Grafo::Vertice, std::size_t> Grafo::arvore_busca_largura(const Vertice 
         q.pop();
         for (auto vizinho : vizinhos(atual))
         {
-            if (vertices[vizinho - 1].visitado == false)
+            if (!vertices[vizinho - 1].visitado)
             {
                 // conhecendo vertices ainda nao visitados
                 vertices[vizinho - 1].nivel = vertices[atual - 1].nivel + 1;
@@ -115,7 +117,7 @@ std::map<Grafo::Vertice, std::size_t> Grafo::arvore_busca_largura(const Vertice 
         }
     }
     
-    // gera map
+    // gera arvore de busca (map)
     std::map<Vertice, std::size_t> arvore;
     for (std::size_t i = 0; i < vertices.size(); ++i)
     {
@@ -123,35 +125,6 @@ std::map<Grafo::Vertice, std::size_t> Grafo::arvore_busca_largura(const Vertice 
     }
     
     return arvore;
-}
-
-void Grafo::print_arvore_busca_largura(const std::map<Vertice, std::size_t>& arvore) const
-{
-    auto n = arvore.size();
-    std::size_t nivel{0};
-    
-    while (n > 0)
-    {
-        std::vector<Vertice> vertices_no_nivel;
-        for (auto v : arvore)
-        {
-            if (v.second == nivel) 
-            {
-                vertices_no_nivel.push_back(v.first);
-                --n;
-            }
-        }
-        
-        std::sort(vertices_no_nivel.begin(), vertices_no_nivel.end());
-        std::cout << nivel << ": ";
-        for (std::size_t i = 0; i < vertices_no_nivel.size(); ++i)
-        {
-            std::cout << vertices_no_nivel[i] << (i != vertices_no_nivel.size() - 1 ? "," : "");
-        }
-        std::cout << '\n';
-        
-        ++nivel;
-    }
 }
 
 Grafo::RetornoHierholzer Grafo::algoritmo_hierholzer() const
@@ -235,9 +208,9 @@ Grafo::RetornoHierholzer Grafo::buscar_subciclo(Vertice v, std::vector<std::vect
         ciclo.push_back(v);
     } while (v != t);
     
-    for (auto it = ciclo.begin(); it != ciclo.end(); ++it)
+    for (auto i = 0; i < ciclo.size(); ++i)
     {
-        Vertice x = *it;
+        Vertice x = ciclo[i];
         for (auto j = 0; j < qtd_vertices(); ++j)
         {
             if (C[x - 1][j] > 0)
@@ -247,7 +220,9 @@ Grafo::RetornoHierholzer Grafo::buscar_subciclo(Vertice v, std::vector<std::vect
                 {
                     return {false, {}};
                 }
-                ciclo.insert(it, subciclo.ciclo_euleriano.begin(), subciclo.ciclo_euleriano.end() - 1);
+                ciclo.erase(ciclo.begin() + i);  // evita duplicatas
+                ciclo.insert(ciclo.begin() + i, subciclo.ciclo_euleriano.begin(), subciclo.ciclo_euleriano.end() - 1);
+                i += subciclo.ciclo_euleriano.size() - 1;  // evita processamentos desnecessarios
                 break;
             }
         }
