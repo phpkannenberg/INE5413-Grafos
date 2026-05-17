@@ -9,6 +9,8 @@
 
 class Grafo
 {
+// TODO: excluir
+friend void teste_transposto(const Grafo& g);
 public:
     typedef std::size_t Vertice;
     typedef std::vector<std::pair<std::string, std::vector<double>>> MatrizAdjacencia;
@@ -29,12 +31,12 @@ public:
     double peso(const Vertice va, const Vertice vb) const
         { return matriz_adjacencia[va - 1].second[vb - 1]; }
     
-    // EXERCICIO 2
+    // A1-EXERCICIO 2
     // retorna um map representando arvore de busca 
     // pairs do map representam vertice e nivel da busca em que vertice foi visitado
     std::map<Vertice, std::size_t> arvore_busca_largura(const Vertice origem) const;
     
-    // EXERCICIO 3
+    // A1-EXERCICIO 3
     // struct para encapsular estruturas retornadas pelo algoritmo de Hierholzer
     struct RetornoHierholzer
     {
@@ -43,7 +45,7 @@ public:
     };
     RetornoHierholzer algoritmo_hierholzer() const;
     
-    // EXERCICIO 5
+    // A1-EXERCICIO 5
     // struct para encapsular estruturas retornadas pelo algoritmo de Floyd-Warshall
     struct RetornoFloydWarshall
     {
@@ -51,6 +53,18 @@ public:
         std::vector<std::vector<Vertice>> matriz_predecessores;
     };
     RetornoFloydWarshall algoritmo_floyd_warshall() const;
+    
+    // A2-EXERCICIO 1
+    // struct para encapsular informacoes importantes para cada vertice no algoritmo de Kosaraju-Sharir
+    struct VerticeCFC
+    {
+        Vertice vertice;
+        bool conhecido;
+        std::size_t tempo_inicio;
+        std::size_t tempo_termino;
+        Vertice ancestral;
+    };
+    std::vector<std::pair<Vertice, Vertice>> algoritmo_kosaraju_sharir() const;  // retorna vetor de ancestrais
     
 private:
     // cada elemento representa um vertice
@@ -60,6 +74,12 @@ private:
     
     // funcao auxiliar chamada por Grafo::algoritmo_hierholzer
     RetornoHierholzer buscar_subciclo(Vertice v, std::vector<std::vector<std::size_t>>& C) const;
+    
+    // funcoes auxiliares para busca de componentes fortemente conectadas
+    std::vector<VerticeCFC> DFS() const;
+    void DFS_adaptado(const Grafo& grafo_transposto, std::vector<VerticeCFC>& vertices) const;
+    void DFS_visit(Vertice u, std::vector<VerticeCFC>& vertices, std::size_t& tempo) const;
+    Grafo transpor_grafo() const;
 };
 
 Grafo le_grafo(std::istream& is);

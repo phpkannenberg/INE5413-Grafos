@@ -28,14 +28,17 @@ Grafo le_grafo(std::istream& is = std::cin)
         ma[i].first = rotulo.substr(1);  // retira espaco em branco
     }
     
-    // le arestas
+    // le arestas/arcos
     is >> s;
     std::size_t va, vb;
     double peso;
     while (is >> va >> vb >> peso)
     {
         ma[va - 1].second[vb - 1] = peso;
-        ma[vb - 1].second[va - 1] = peso;
+        if (s == "*edges")
+        {
+            ma[vb - 1].second[va - 1] = peso;
+        }
     }
     
     return Grafo(ma);
@@ -272,3 +275,123 @@ Grafo::RetornoFloydWarshall Grafo::algoritmo_floyd_warshall() const
     
     return {matriz_custos, matriz_predecessores};
 }
+
+std::vector<std::pair<Grafo::Vertice, Grafo::Vertice>> Grafo::algoritmo_kosaraju_sharir() const
+{
+    // chama DFS para computar os tempos de termino para cada vertice
+    std::vector<VerticeCFC> vertices(DFS());
+    
+    // grafo transposto
+    Grafo grafo_transposto(transpor_grafo());
+    
+    // DFS adaptado
+    DFS_adaptado(grafo_transposto, vertices);
+    
+    std::sort(vertices.begin(), vertices.end(), [] (const VerticeCFC& a, const VerticeCFC& b) { return a.vertice < b.vertice; });
+    std::vector<std::pair<Vertice, Vertice>> ancestrais;
+    for (const auto& v : vertices)
+    {
+        ancestrais.push_back(std::make_pair(v.vertice, v.ancestral));
+    }
+    
+    return ancestrais;
+}
+
+std::vector<Grafo::VerticeCFC> Grafo::DFS() const
+{
+    // configurando todos os vertices
+    std::vector<VerticeCFC> vertices(qtd_vertices());
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        vertices[i].vertice = i + 1;
+        vertices[i].conhecido = false;
+        vertices[i].tempo_inicio = std::numeric_limits<std::size_t>::max();
+        vertices[i].tempo_termino = std::numeric_limits<std::size_t>::max();
+        vertices[i].ancestral = std::numeric_limits<std::size_t>::max();
+    }
+    
+    // configurando tempo de inicio
+    std::size_t tempo(0);
+    
+    for (auto& v : vertices)
+    {
+        if (!v.conhecido)
+        {
+            DFS_visit(v.vertice, vertices, tempo);
+        }
+    }
+    
+    return vertices;
+}
+
+void Grafo::DFS_adaptado(const Grafo& grafo_transposto, std::vector<VerticeCFC>& vertices) const
+{
+    // ordena vertices em ordem decrescente de F (tempo_termino)
+    std::sort(vertices.begin(), vertices.end(), [&] (const VerticeCFC a, const VerticeCFC b) { return a.tempo_termino > b.tempo_termino; });
+    
+    // configurando todos os vertices
+    for (auto& v: vertices)
+    {
+        v.conhecido = false;
+        v.tempo_inicio = std::numeric_limits<std::size_t>::max();
+        v.tempo_termino = std::numeric_limits<std::size_t>::max();
+        v.ancestral = std::numeric_limits<std::size_t>::max();
+    }
+    
+    std::size_t tempo(0);
+    
+    for (auto& v : vertices)
+    {
+        if (!v.conhecido)
+        {
+            grafo_transposto.DFS_visit(v.vertice, vertices, tempo);
+        }
+    }
+}
+
+void Grafo::DFS_visit(Vertice id, std::vector<VerticeCFC>& vertices, std::size_t& tempo) const
+{
+    // seleciona VerticeCFC com base no id
+    VerticeCFC& u_cfc = *std::find_if(vertices.begin(), vertices.end(), 
+                                     [id] (const VerticeCFC& a) { return a.vertice == id; });
+    
+    u_cfc.conhecido = true;
+    ++tempo;
+    u_cfc.tempo_inicio = tempo;
+    
+    // encontra vizinhos de u ainda nao conhecidos e executa DFS-visit
+    for (auto& v : vizinhos(u_cfc.vertice))
+    {
+        for (auto& w_cfc : vertices)
+        {
+            if (w_cfc.vertice == v && !w_cfc.conhecido)
+            {
+                w_cfc.ancestral = u_cfc.vertice;
+                DFS_visit(w_cfc.vertice, vertices, tempo);
+            }
+        }
+    }
+    
+    ++tempo;
+    u_cfc.tempo_termino = tempo;
+}
+
+Grafo Grafo::transpor_grafo() const
+{
+    MatrizAdjacencia ma(qtd_vertices(), std::make_pair("", std::vector<double>(qtd_vertices(), std::numeric_limits<double>::infinity())));
+    
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        ma[i].first = matriz_adjacencia[i].first;
+        for (auto j = 0; j < qtd_vertices(); ++j)
+        {
+            if (matriz_adjacencia[i].second[j] != std::numeric_limits<double>::infinity())
+            {
+                ma[j].second[i] = matriz_adjacencia[i].second[j];
+            }
+        }
+    }
+    
+    return Grafo(ma);
+}
+
