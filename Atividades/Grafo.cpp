@@ -395,3 +395,55 @@ Grafo Grafo::transpor_grafo() const
     return Grafo(ma);
 }
 
+const std::vector<Grafo::Vertice> Grafo::DFS_ordenacao_topologica() const
+{
+    std::vector<VerticeOT> vertices(qtd_vertices());
+    
+    // configurando todos os vertices
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        vertices[i].vertice = i + 1;
+        vertices[i].conhecido = false;
+        vertices[i].tempo_inicio = std::numeric_limits<std::size_t>::max();
+        vertices[i].tempo_termino = std::numeric_limits<std::size_t>::max();
+    }
+    
+    // configurando tempo de inicio
+    std::size_t tempo(0);
+    
+    // criando lista com os vertices ordenados topologicamente (estrutura O)
+    std::vector<Vertice> ordenacao;
+    
+    for (auto& v : vertices)
+    {
+        if (!v.conhecido) DFS_visit_ot(v.vertice, vertices, tempo, ordenacao);
+    }
+    
+    return ordenacao;
+}
+
+void Grafo::DFS_visit_ot(const Vertice& id_origem, std::vector<VerticeOT>& vertices, std::size_t& tempo, std::vector<Vertice>& ordenacao) const
+{
+    // seleciona VerticeOT com base no id_origem
+    VerticeOT& v_ot = *std::find_if(vertices.begin(), vertices.end(), 
+                                   [id_origem] (const VerticeOT& a) { return a.vertice == id_origem; });
+                                   
+    v_ot.conhecido = true;
+    ++tempo;
+    v_ot.tempo_inicio = tempo;
+    
+    for (const auto& u : vizinhos(v_ot.vertice))
+    {
+        for (auto& u_ot : vertices)
+        {
+            if (u == u_ot.vertice && !u_ot.conhecido)
+            {
+                DFS_visit_ot(u_ot.vertice, vertices, tempo, ordenacao);
+            }
+        }
+    }
+    
+    ++tempo;
+    v_ot.tempo_termino = tempo;
+    ordenacao.insert(ordenacao.begin(), v_ot.vertice);
+}

@@ -66,6 +66,17 @@ public:
     };
     std::vector<std::pair<Vertice, Vertice>> algoritmo_kosaraju_sharir() const;  // retorna vetor de ancestrais
     
+    // A2-EXERCICIO 2
+    // struct para encapsular informacoes importantes para cada vertice na ordenacao topologica
+    struct VerticeOT
+    {
+        Vertice vertice;
+        bool conhecido;
+        std::size_t tempo_inicio;
+        std::size_t tempo_termino;
+    };
+    const std::vector<Vertice> DFS_ordenacao_topologica() const;
+    
 private:
     // cada elemento representa um vertice
     // pair.first retorna o rotulo
@@ -80,6 +91,9 @@ private:
     void DFS_adaptado(const Grafo& grafo_transposto, std::vector<VerticeCFC>& vertices) const;
     void DFS_visit(Vertice u, std::vector<VerticeCFC>& vertices, std::size_t& tempo) const;
     Grafo transpor_grafo() const;
+    
+    // funcao auxiliar chamada por Grafo::DFS_ordenacao_topologica
+    void DFS_visit_ot(const Vertice& id_origem, std::vector<VerticeOT>& vertices, std::size_t& tempo, std::vector<Vertice>& ordenacao) const;
 };
 
 Grafo le_grafo(std::istream& is);
