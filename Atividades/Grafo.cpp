@@ -447,3 +447,51 @@ void Grafo::DFS_visit_ot(const Vertice& id_origem, std::vector<VerticeOT>& verti
     v_ot.tempo_termino = tempo;
     ordenacao.insert(ordenacao.begin(), v_ot.vertice);
 }
+
+std::vector<std::pair<Grafo::Vertice, Grafo::Vertice>> Grafo::algoritmo_prim() const
+{
+    struct VerticePrim
+    {
+        Vertice vertice;
+        Vertice ancestral;
+        std::size_t chave;
+    };
+
+    std::vector<VerticePrim> vertices(qtd_vertices());
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        vertices[i].vertice = i + 1;
+        vertices[i].ancestral = std::numeric_limits<std::size_t>::max();
+        vertices[i].chave = std::numeric_limits<std::size_t>::max();
+    }
+    
+    auto vertices_controle(vertices);
+    if (!vertices.empty()) vertices_controle[0].chave = 0;
+    
+    while (!vertices_controle.empty())
+    {
+        std::sort(vertices_controle.begin(), vertices_controle.end(), 
+            [] (const VerticePrim& a, const VerticePrim& b) { return a.chave < b.chave; });
+        
+        VerticePrim u(*vertices_controle.begin());  // copia    
+        vertices_controle.erase(vertices_controle.begin());
+        
+        for (const auto v : vizinhos(u.vertice))
+        {
+            auto v_it = std::find_if(vertices_controle.begin(), vertices_controle.end(), [v] (const VerticePrim& a) { return a.vertice == v; });
+            if (v_it != vertices_controle.end() && peso(u.vertice, (*v_it).vertice) < (*v_it).chave)
+            {
+                auto v_original_it(std::find_if(vertices.begin(), vertices.end(), [v] (const VerticePrim& a) { return a.vertice == v; })); 
+                (*v_original_it).ancestral = u.vertice;
+                (*v_original_it).chave = peso(u.vertice, (*v_it).vertice);
+                (*v_it).chave = peso(u.vertice, (*v_it).vertice);
+            }
+        }
+    }
+    
+    std::vector<std::pair<Vertice, Vertice>> ancestrais;
+    for (const auto& v : vertices)
+        ancestrais.push_back(std::make_pair(v.vertice, v.ancestral));
+        
+    return ancestrais;
+}

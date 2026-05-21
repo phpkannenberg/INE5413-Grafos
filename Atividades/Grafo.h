@@ -77,6 +77,9 @@ public:
     };
     const std::vector<Vertice> DFS_ordenacao_topologica() const;
     
+    // A2-EXERCICIO 3
+    std::vector<std::pair<Vertice, Vertice>> algoritmo_prim() const;
+    
 private:
     // cada elemento representa um vertice
     // pair.first retorna o rotulo
