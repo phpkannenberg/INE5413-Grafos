@@ -9,13 +9,11 @@
 
 class Grafo
 {
-// TODO: excluir
-friend void teste_transposto(const Grafo& g);
 public:
     typedef std::size_t Vertice;
     typedef std::vector<std::pair<std::string, std::vector<double>>> MatrizAdjacencia;
     
-    // EXERCICIO 1
+    // A1-EXERCICIO 1
     // leitura do grafo a partir de arquivo eh feita por funcao le_grafo (declarada fora do escopo da classe)
     Grafo(): matriz_adjacencia() { }  // default constructor
     Grafo(const MatrizAdjacencia& ma): matriz_adjacencia(ma) { }
@@ -80,11 +78,16 @@ public:
     // A2-EXERCICIO 3
     std::vector<std::pair<Vertice, Vertice>> algoritmo_prim() const;
     
+    // A3-EXERCICIO 1
+    double algoritmo_edmonds_karp(const Vertice s, const Vertice t) const;
+    
 private:
     // cada elemento representa um vertice
     // pair.first retorna o rotulo
     // pair.second retorna vetor com peso da transicao para cada vertice
-    const MatrizAdjacencia matriz_adjacencia;
+    MatrizAdjacencia matriz_adjacencia;
+    void set_peso(const Vertice va, const Vertice vb, const double novo_peso)
+        { matriz_adjacencia[va - 1].second[vb - 1] = novo_peso; }
     
     // funcao auxiliar chamada por Grafo::algoritmo_hierholzer
     RetornoHierholzer buscar_subciclo(Vertice v, std::vector<std::vector<std::size_t>>& C) const;
@@ -97,6 +100,10 @@ private:
     
     // funcao auxiliar chamada por Grafo::DFS_ordenacao_topologica
     void DFS_visit_ot(const Vertice& id_origem, std::vector<VerticeOT>& vertices, std::size_t& tempo, std::vector<Vertice>& ordenacao) const;
+    
+    // funcoes auxiliar chamada por Grafo::algoritmo_edmonds_karp
+    std::vector<Vertice> BFS_edmonds_karp(const Vertice s, const Vertice t, Grafo& rede_residual) const;
+    Grafo rede_residual() const;
 };
 
 Grafo le_grafo(std::istream& is);

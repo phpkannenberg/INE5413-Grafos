@@ -495,3 +495,115 @@ std::vector<std::pair<Grafo::Vertice, Grafo::Vertice>> Grafo::algoritmo_prim() c
         
     return ancestrais;
 }
+
+double Grafo::algoritmo_edmonds_karp(const Vertice s, const Vertice t) const
+{
+    // gera novo grafo para representar capacidades na rede residual
+    auto rede_res(rede_residual());
+    
+    double F(0);
+    
+    while (true)
+    {
+        auto p(BFS_edmonds_karp(s, t, rede_res));
+        if (p.empty()) break;  // sai do loop caso nao haja mais caminhos aumentantes
+        
+        // identificando a capacidade do caminho
+        double fluxo(std::numeric_limits<double>::infinity());
+        for (auto i = 0; i < p.size() - 1; ++i)
+        {
+            if (rede_res.peso(p[i], p[i + 1]) < fluxo)
+            {
+                fluxo = rede_res.peso(p[i], p[i + 1]);
+            }
+        }
+        
+        F += fluxo;
+        
+        // atualizando a capacidade residual
+        for (auto i = 0; i < p.size() - 1; ++i)
+        {
+            auto nova_cap(matriz_adjacencia[p[i] - 1].second[p[i + 1] - 1] - fluxo);
+            rede_res.set_peso(p[i], p[i + 1], nova_cap);
+        }
+    }
+    
+    return F;
+}
+
+std::vector<Grafo::Vertice> Grafo::BFS_edmonds_karp(const Vertice s, const Vertice t, Grafo& rede_residual) const
+{
+    struct VerticeEK
+    {
+        bool conhecido;
+        Vertice ancestral;
+    };
+    
+    // configurando vertices
+    std::vector<VerticeEK> vertices(qtd_vertices());
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        vertices[i].conhecido = false;
+        vertices[i].ancestral = std::numeric_limits<std::size_t>::max();
+    }
+    vertices[s - 1].conhecido = true;
+    
+    std::queue<Vertice> q;
+    q.push(s);
+    
+    while (!q.empty())
+    {
+        auto u(q.front());
+        q.pop();
+        
+        for (auto v : vizinhos(u))
+        {
+            if (!vertices[v - 1].conhecido && rede_residual.peso(u, v) > 0)
+            {
+                vertices[v - 1].conhecido = true;
+                vertices[v - 1].ancestral = u;
+                
+                // sorvedouro encontrado
+                if (v == t)
+                {
+                    std::vector<Vertice> p({t});
+                    auto w(t);
+      
+                    while (w != s)
+                    {
+                        w = vertices[w - 1].ancestral;
+                        p.insert(p.begin(), w);
+                    }
+                    
+                    return p;
+                }
+                
+                q.push(v);
+            }
+        }
+    }
+    
+    return std::vector<Vertice>();  // retorna vetor vazio caso nao encontre caminho aumentante
+}
+
+Grafo Grafo::rede_residual() const
+{
+    // matriz para rede residual
+    MatrizAdjacencia ma(qtd_vertices(), std::make_pair("", std::vector<double>(qtd_vertices(), std::numeric_limits<double>::infinity())));
+    
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        ma[i].first = rotulo(i + 1);  // define rotulo
+        for (auto j = 0; j < qtd_vertices(); ++j)
+        {
+            ma[i].second[j] = (peso(i + 1, j + 1) == std::numeric_limits<double>::infinity() ? 0 : peso(i + 1, j + 1));  // define capacidade
+            /*
+             * fluxo nao sera definido no sentido j -> i pois sera calculado a partir da diferenca 
+             * entre peso da matriz do grafo original e o peso da matriz do grafo da rede residual
+             */
+        }
+    }
+    
+    return Grafo(ma);
+}
+
