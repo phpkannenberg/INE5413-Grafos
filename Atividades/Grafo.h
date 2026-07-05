@@ -95,6 +95,12 @@ public:
     RetornoHopcroftKarp algoritmo_hopcroft_karp() const;
     
     // A3-EXERCICIO 3
+    struct RetornoColoracao
+    {
+        std::size_t numero_cromatico;
+        std::map<Vertice, std::size_t> coloracao;  // mapeia vertice ao id da cor
+    };
+    RetornoColoracao algoritmo_lawler() const;
     
     
 private:
@@ -124,8 +130,15 @@ private:
     // funcoes auxiliares chamadas por Grafo::algoritmo_hopcroft_karp
     bool BFS_hopcroft_karp(std::vector<VerticeHK>& vertices) const;
     bool DFS_hopcroft_karp(std::vector<VerticeHK>& vertices, const Vertice x) const;
+    
+    // funcoes auxiliares chamadas por Grafo::algoritmo_lawler
+    std::vector<std::vector<Vertice>> listar_cims(const std::vector<Vertice>& subconjunto) const;
+    std::map<Vertice, std::size_t> mapa_cores
+        (const std::vector<std::vector<Vertice>>& conjunto_potencia, const std::vector<std::vector<Vertice>>& pai_cim) const;
 };
 
 Grafo le_grafo(std::istream& is);
+std::vector<std::vector<Grafo::Vertice>> gerar_conjunto_potencia
+    (const std::vector<Grafo::Vertice>& conjunto);
 
 #endif

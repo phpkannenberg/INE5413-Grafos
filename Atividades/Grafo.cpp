@@ -706,3 +706,163 @@ bool Grafo::DFS_hopcroft_karp(std::vector<VerticeHK>& vertices, const Vertice x)
     
     return true;
 }
+
+std::vector<std::vector<Grafo::Vertice>> gerar_conjunto_potencia(const std::vector<Grafo::Vertice>& conjunto) {
+    auto n = conjunto.size();
+    auto total_subconjuntos = 1 << n;  // 2^n (usando deslocamento a esquerda)
+    std::vector<std::vector<Grafo::Vertice>> conjunto_potencia;
+
+    for (int i = 0; i < total_subconjuntos; ++i) 
+    {
+        std::vector<Grafo::Vertice> subconjunto_atual;
+        for (int j = 0; j < n; ++j) 
+        {
+            if (i & (1 << j))  // verifica se o j-esimo bit esta ativo
+            {
+                subconjunto_atual.push_back(conjunto[j]);
+            }
+        }
+        
+        conjunto_potencia.push_back(subconjunto_atual);
+    }
+
+    return conjunto_potencia;
+}
+
+Grafo::RetornoColoracao Grafo::algoritmo_lawler() const
+{
+    // vetor indexado de 0 a 2^{|N|} - 1
+    std::vector<std::size_t> x(1 << qtd_vertices(), std::numeric_limits<std::size_t>::max());
+    x[0] = 0;
+    
+    // armazena cim usado para obter a coloracao de cada subconjunto
+    std::vector<std::vector<Vertice>> pai_cim(1 << qtd_vertices());
+    
+    // vetor com todos os vertices do grafo
+    std::vector<Vertice> vertices(qtd_vertices());
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        vertices[i] = i + 1;
+    }
+    
+    // gera e ordena (de acordo com cardinalidade do subconjunto) o conjunto potencia
+    auto conjunto_potencia(gerar_conjunto_potencia(vertices));
+    std::stable_sort(conjunto_potencia.begin(), conjunto_potencia.end(), 
+        [] (const std::vector<Vertice>& a, const std::vector<Vertice>& b) { return a.size() < b.size(); });
+        
+    for (const auto& sub : conjunto_potencia)
+    {
+        if (sub.empty()) continue;
+        
+        // calcula indice do subconjunto de acordo com a ordenacao
+        auto it(std::find(conjunto_potencia.begin(), conjunto_potencia.end(), sub));
+        std::size_t idx_sub(it - conjunto_potencia.begin());
+        
+        x[idx_sub] = std::numeric_limits<std::size_t>::max();
+        
+        for (const auto& cim : listar_cims(sub))  // cim eh std::vector<Vertice>
+        {
+            // retira cim do subconjunto atual
+            std::vector<Vertice> dif_cim;
+            for (const auto& elem : sub)
+            {
+                if (std::find(cim.begin(), cim.end(), elem) == cim.end())
+                {
+                    dif_cim.push_back(elem);
+                }
+            }
+            
+            // calcula indice do subconjunto sem o cim
+            auto it_dif_cim(std::find(conjunto_potencia.begin(), conjunto_potencia.end(), dif_cim));
+            std::size_t idx_dif_cim(it_dif_cim - conjunto_potencia.begin());
+            
+            // atualiza numero cromatico para o subconjunto atual e armazena cim pai
+            if (x[idx_dif_cim] + 1 < x[idx_sub])
+            {
+                x[idx_sub] = x[idx_dif_cim] + 1;
+                pai_cim[idx_sub] = cim;
+            }
+        }
+    }
+    
+    return { x[x.size() - 1], mapa_cores(conjunto_potencia, pai_cim) };
+}
+
+std::vector<std::vector<Grafo::Vertice>> Grafo::listar_cims(const std::vector<Vertice>& subconjunto) const
+{
+    auto s(gerar_conjunto_potencia(subconjunto));
+    std::vector<std::vector<Vertice>> r;
+    
+    for (const auto x : s)
+    {
+        bool c(true);
+        for (const auto v : x)
+        {
+            for (const auto u : x)
+            {
+                if (peso(u, v) != std::numeric_limits<double>::infinity() || 
+                    peso(v, u) != std::numeric_limits<double>::infinity())
+                {
+                    c = false;
+                    break;
+                }
+            }
+        }
+        
+        if (c)
+        {
+            auto subx(gerar_conjunto_potencia(x));
+            for (const auto s : subx)
+            {
+                auto it_s(std::find(r.begin(), r.end(), s));
+                if (it_s != r.end())
+                {
+                    r.erase(it_s);
+                }
+            }
+            r.push_back(x);
+        }
+    }
+    
+    return r;
+}
+
+std::map<Grafo::Vertice, std::size_t> Grafo::mapa_cores
+    (const std::vector<std::vector<Vertice>>& conjunto_potencia, const std::vector<std::vector<Vertice>>& pai_cim) const
+{
+    std::map<Vertice, std::size_t> mapa_cores;
+    std::size_t cor_atual(1);
+    
+    // comeca pelo maior subconjunto do conjunto potencia
+    std::vector<Vertice> sub_atual(conjunto_potencia.back());
+    
+    while (!sub_atual.empty())  // procede ate chegar ao subconjunto nulo
+    {
+        auto it(std::find(conjunto_potencia.begin(), conjunto_potencia.end(), sub_atual));
+        std::size_t idx_sub(it - conjunto_potencia.begin());
+        
+        // seleciona o cim usado para colorir o subconjunto atual do grafo
+        const auto& cim_usado(pai_cim[idx_sub]);
+        
+        // atribui a cor_atual a todos os vertices do cim
+        for (const auto& v : cim_usado)
+        {
+            mapa_cores[v - 1] = cor_atual;
+        }
+        
+        // seleciona novo subconjunto a ser analisado a partir da diferenca entre sub_atual e cim_usado
+        std::vector<Vertice> proximo_sub;
+        for (const auto& elem : sub_atual)
+        {
+            if (std::find(cim_usado.begin(), cim_usado.end(), elem) == cim_usado.end())
+            {
+                proximo_sub.push_back(elem);
+            }
+        }
+        
+        sub_atual = proximo_sub;
+        ++cor_atual;
+    }
+    
+    return mapa_cores;
+}
