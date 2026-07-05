@@ -81,6 +81,22 @@ public:
     // A3-EXERCICIO 1
     double algoritmo_edmonds_karp(const Vertice s, const Vertice t) const;
     
+    // A3-EXERCICIO 2
+    struct RetornoHopcroftKarp
+    {
+        std::size_t m;
+        std::vector<Vertice> mate;
+    };
+    struct VerticeHK
+    {
+        std::size_t distancia;
+        Vertice mate;
+    };
+    RetornoHopcroftKarp algoritmo_hopcroft_karp() const;
+    
+    // A3-EXERCICIO 3
+    
+    
 private:
     // cada elemento representa um vertice
     // pair.first retorna o rotulo
@@ -101,9 +117,13 @@ private:
     // funcao auxiliar chamada por Grafo::DFS_ordenacao_topologica
     void DFS_visit_ot(const Vertice& id_origem, std::vector<VerticeOT>& vertices, std::size_t& tempo, std::vector<Vertice>& ordenacao) const;
     
-    // funcoes auxiliar chamada por Grafo::algoritmo_edmonds_karp
+    // funcoes auxiliares chamadas por Grafo::algoritmo_edmonds_karp
     std::vector<Vertice> BFS_edmonds_karp(const Vertice s, const Vertice t, Grafo& rede_residual) const;
     Grafo rede_residual() const;
+    
+    // funcoes auxiliares chamadas por Grafo::algoritmo_hopcroft_karp
+    bool BFS_hopcroft_karp(std::vector<VerticeHK>& vertices) const;
+    bool DFS_hopcroft_karp(std::vector<VerticeHK>& vertices, const Vertice x) const;
 };
 
 Grafo le_grafo(std::istream& is);

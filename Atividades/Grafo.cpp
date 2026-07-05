@@ -607,3 +607,102 @@ Grafo Grafo::rede_residual() const
     return Grafo(ma);
 }
 
+Grafo::RetornoHopcroftKarp Grafo::algoritmo_hopcroft_karp() const
+{    
+    auto null(qtd_vertices() + 1);
+    
+    std::vector<VerticeHK> vertices
+        (qtd_vertices() + 1, {std::numeric_limits<std::size_t>::max(), null});
+    std::size_t m(0);
+    
+    while (BFS_hopcroft_karp(vertices))
+    {
+        for (auto i = 0; i < (qtd_vertices() / 2); ++i)
+        {
+            if (vertices[i].mate == null)
+            {
+                if (DFS_hopcroft_karp(vertices, i + 1))
+                {
+                    ++m;
+                }
+            }
+        }
+    }
+    
+    std::vector<Vertice> mate(qtd_vertices());
+    for (auto i = 0; i < qtd_vertices(); ++i)
+    {
+        mate[i] = vertices[i].mate;
+    }
+    
+    return {m, mate};
+}
+
+bool Grafo::BFS_hopcroft_karp(std::vector<VerticeHK>& vertices) const
+{
+    auto null(qtd_vertices() + 1);
+    
+    std::queue<Vertice> q;
+    
+    for (auto i = 0; i < (qtd_vertices() / 2); ++i)
+    {
+        if (vertices[i].mate == null)
+        {
+            vertices[i].distancia = 0;
+            q.push(i + 1);
+        }
+        else
+        {
+            vertices[i].distancia = std::numeric_limits<std::size_t>::max();
+        }
+    }
+    
+    vertices[null - 1].distancia = std::numeric_limits<std::size_t>::max();
+    
+    while (!q.empty())
+    {
+        auto x(q.front());
+        q.pop();
+        
+        if (vertices[x - 1].distancia < vertices[null - 1].distancia)
+        {
+            for (auto y : vizinhos(x))
+            {
+                auto mate_y(vertices[y - 1].mate);
+                if (vertices[mate_y - 1].distancia == std::numeric_limits<std::size_t>::max())
+                {
+                    vertices[mate_y - 1].distancia = vertices[x - 1].distancia + 1;
+                    q.push(mate_y);
+                }
+            }
+        }
+    }
+    
+    return vertices[null - 1].distancia != std::numeric_limits<std::size_t>::max();
+}
+
+bool Grafo::DFS_hopcroft_karp(std::vector<VerticeHK>& vertices, const Vertice x) const
+{
+    auto null(qtd_vertices() + 1);
+    
+    if (x != null)
+    {
+        for (auto y : vizinhos(x))
+        {
+            auto mate_y(vertices[y - 1].mate);
+            if (vertices[mate_y - 1].distancia == (vertices[x - 1].distancia + 1))
+            {
+                if (DFS_hopcroft_karp(vertices, mate_y))
+                {
+                    vertices[y - 1].mate = x;
+                    vertices[x - 1].mate = y;
+                    return true;
+                }
+            }
+        }
+        vertices[x - 1].distancia = std::numeric_limits<std::size_t>::max();
+        return false;
+    }
+    
+    return true;
+}
